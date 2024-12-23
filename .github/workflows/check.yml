@@ -30,10 +30,9 @@ jobs:
             echo "changes=true" >> $GITHUB_ENV
           fi
 
-      - name: Post comment using GitHub CLI
+      - name: Post comment on PR
         if: env.changes == 'true'
         run: |
-          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
           gh pr comment ${{ github.event.pull_request.number }} --body "⚠️ Changes detected in \`init_db\`, but no new changelog files found in \`src/main/resources/db/changelog\`. Please add the necessary changelog files."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
