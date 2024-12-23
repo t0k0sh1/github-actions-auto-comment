@@ -4,16 +4,18 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   check-changelog:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. プロジェクトをチェックアウト
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. init_db配下の差分を確認
       - name: Check for changes in init_db
         id: check_init_db
         run: |
@@ -28,23 +30,8 @@ jobs:
             echo "changes=true" >> $GITHUB_ENV
           fi
 
-      # 3. 差分がある場合、changelogフォルダをチェック
-      - name: Check for new changelog files
+      - name: Post comment on PR
         if: env.changes == 'true'
-        id: check_changelog
-        run: |
-          CHANGELOG_FILES=$(git diff --name-only base_branch -- src/main/resources/db/changelog/)
-          if [ -z "$CHANGELOG_FILES" ]; then
-            echo "No new changelog files found."
-            echo "changelog_missing=true" >> $GITHUB_ENV
-          else
-            echo "New changelog files found: $CHANGELOG_FILES"
-            echo "changelog_missing=false" >> $GITHUB_ENV
-          fi
-
-      # 4. コメントをPRに投稿
-      - name: Post comment on PR if changelog is missing
-        if: env.changes == 'true' && env.changelog_missing == 'true'
         run: |
           gh pr comment ${{ github.event.pull_request.number }} --body "⚠️ Changes detected in \`init_db\`, but no new changelog files found in \`src/main/resources/db/changelog\`. Please add the necessary changelog files."
         env:
